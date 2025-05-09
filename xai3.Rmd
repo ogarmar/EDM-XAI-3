@@ -111,3 +111,53 @@ ggarrange(plotlist = pdp_plots, ncol = 2, nrow = 2) %>%
 
 
 
+# PART 2: 2D PDP for Bike Rentals
+```{r}
+# Sample data for computational efficiency
+sampled_data <- bike_data %>% 
+  sample_n(size = min(500, nrow(bike_data)))
+```
+
+
+```{r}
+# Create 2D PDP
+pdp_2d <- partial(rf_bike, 
+                 pred.var = c("temp", "hum"),
+                 grid.resolution = 15,
+                 chull = TRUE,
+                 train = sampled_data)
+```
+
+
+```{r}
+# Create combined plot
+ggplot(pdp_2d, aes(temp, hum, fill = yhat)) +
+  geom_tile(alpha = 0.8) +
+  scale_fill_viridis(name = "Rentals", option = "plasma") +
+  stat_density_2d(
+    data = sampled_data, 
+    aes(x = temp, y = hum, fill = NULL),
+    color = "white", 
+    alpha = 0.4,
+    breaks = c(0.05, 0.1)
+  ) +
+  labs(
+    title = "2D PDP: Temperature vs Humidity Interaction",
+    subtitle = "Contour lines show data density distribution",
+    x = "Normalized Temperature",
+    y = "Normalized Humidity"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "bottom")
+```
+
+
+## Interpretation :
+
+The interaction analysis reveals:
+- Optimal conditions: temp 0.6-0.8 (20-28°C) + hum 0.4-0.6 (40-60%)
+- High temp (>0.8) only beneficial with low humidity (<0.5)
+- Dangerous combination: hum >0.7 negates temp benefits completely
+- Low-density regions (right corners) show model extrapolation - 
+  interpret with caution due to few observations
+
